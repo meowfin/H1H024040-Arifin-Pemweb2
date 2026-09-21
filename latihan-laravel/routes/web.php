@@ -1,7 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\MahasiswaWebController;
 
+Route::get('/mahasiswa-data', [
+    MahasiswaWebController::class,
+    'index'
+])->name('mahasiswa.data');
 Route::get('/', function () {
     return view('welcome');
 });
@@ -45,3 +50,4 @@ Route::get('/data-matakuliah/{kode}', [
     'show'
 ])->name('matakuliah.show');
 Route::get('/cari-matakuliah', [MatakuliahController::class, 'cari']);
+Route::get('/mahasiswa-detail/{id}', [MahasiswaWebController::class, 'show'])->name('mahasiswa.detail');
