@@ -1,45 +1,83 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreMatakuliahRequest;
+use App\Http\Requests\UpdateMatakuliahRequest;
+use App\Http\Resources\MatakuliahResource;
+use App\Models\Matakuliah;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class MatakuliahController extends Controller
 {
-    // Data array statis minimal 5 matakuliah
-    private $matakuliah = [
-        ['kode' => 'TK1101', 'nama' => 'Pemrograman Web II', 'sks' => 3],
-        ['kode' => 'TK1102', 'nama' => 'Struktur Data dan Algoritma', 'sks' => 3],
-        ['kode' => 'TK1103', 'nama' => 'Basis Data', 'sks' => 3],
-        ['kode' => 'TK1104', 'nama' => 'Jaringan Komputer', 'sks' => 2],
-        ['kode' => 'TK1105', 'nama' => 'Sistem Operasi', 'sks' => 3],
-    ];
-
     public function index(Request $request)
     {
-        $keyword = $request->query('q', '');
+        $kueri = Matakuliah::query();
 
-        // Fitur pencarian sederhana berdasarkan nama atau kode
-        $filtered = array_filter($this->matakuliah, function ($item) use ($keyword) {
-            return empty($keyword) ||
-                stripos($item['nama'], $keyword) !== false ||
-                stripos($item['kode'], $keyword) !== false;
-        });
+        if ($request->filled('cari')) {
+            $katakunci = $request->query('cari');
+            $kueri->where(function ($sub) use ($katakunci) {
+                $sub->where('nama', 'like', '%' . $katakunci . '%')
+                    ->orWhere('kode', 'like', '%' . $katakunci . '%');
+            });
+        }
 
-        return view('matakuliah.index', [
-            'daftarMatakuliah' => $filtered,
-            'keyword' => $keyword
+        if ($request->filled('semester')) {
+            $kueri->where('semester', $request->integer('semester'));
+        }
+
+        $urutan = $request->query('urut', 'nama');
+        $arah = $request->query('arah', 'asc');
+        $kolomDiizinkan = ['nama', 'kode', 'sks', 'semester'];
+
+        if (in_array($urutan, $kolomDiizinkan, true)) {
+            $kueri->orderBy($urutan, $arah === 'desc' ? 'desc' : 'asc');
+        }
+
+        $perHalaman = min($request->integer('per_halaman', 10), 100);
+
+        return MatakuliahResource::collection($kueri->paginate($perHalaman));
+    }
+
+    public function store(StoreMatakuliahRequest $request): JsonResponse
+    {
+        $matakuliah = Matakuliah::create($request->validated());
+
+        return response()->json([
+            'sukses' => true,
+            'pesan' => 'Data matakuliah berhasil dibuat',
+            'data' => new MatakuliahResource($matakuliah),
+        ], 201);
+    }
+
+    public function show(Matakuliah $matakuliah): JsonResponse
+    {
+        return response()->json([
+            'sukses' => true,
+            'data' => new MatakuliahResource($matakuliah),
         ]);
     }
 
-    public function show(string $kode)
+    public function update(UpdateMatakuliahRequest $request, Matakuliah $matakuliah): JsonResponse
     {
-        $matakuliah = collect($this->matakuliah)->firstWhere('kode', $kode);
+        $matakuliah->update($request->validated());
 
-        if (!$matakuliah) {
-            abort(404, 'Matakuliah tidak ditemukan');
-        }
+        return response()->json([
+            'sukses' => true,
+            'pesan' => 'Data matakuliah berhasil diperbarui',
+            'data' => new MatakuliahResource($matakuliah),
+        ]);
+    }
 
-        return view('matakuliah.show', ['matakuliah' => $matakuliah]);
+    public function destroy(Matakuliah $matakuliah): JsonResponse
+    {
+        $matakuliah->delete();
+
+        return response()->json([
+            'sukses' => true,
+            'pesan' => 'Data matakuliah berhasil dihapus',
+        ]);
     }
 }
