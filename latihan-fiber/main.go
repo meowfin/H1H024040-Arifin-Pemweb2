@@ -1,9 +1,9 @@
-package main 
- 
-import ( 
-    "log" 
- 
-    "github.com/gofiber/fiber/v3" 
+package main
+
+import (
+	"log"
+
+	"github.com/gofiber/fiber/v3"
 ) 
  
 func main() { 
