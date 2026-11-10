@@ -2,7 +2,6 @@ package router
 
 import (
 	"latihan-fiber-api/internal/handler"
-	"latihan-fiber-api/internal/middleware"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -16,10 +15,23 @@ func Daftarkan(app *fiber.App) {
 			"pesan":  "API Fiber aktif",
 		})
 	})
-
-	// Melindungi grup rute mahasiswa dengan middleware KunciApi
-	mahasiswa := api.Group("/mahasiswa", middleware.KunciApi())
+	// Grup Mahasiswa (termasuk endpoint pemulihan soft delete)
+	mahasiswa := api.Group("/mahasiswa")
 	mahasiswa.Get("/", handler.DaftarMahasiswa)
-	mahasiswa.Get("/nim/:nim", handler.DetailMahasiswaNim)
+	mahasiswa.Post("/", handler.BuatMahasiswa)
 	mahasiswa.Get("/:id", handler.DetailMahasiswa)
+	mahasiswa.Put("/:id", handler.PerbaruiMahasiswa)
+	mahasiswa.Delete("/:id", handler.HapusMahasiswa)
+	mahasiswa.Post("/:id/pulihkan", handler.PulihkanMahasiswa)
+
+	// Grup Matakuliah (Tugas 1)
+	matakuliah := api.Group("/matakuliah")
+	matakuliah.Get("/", handler.DaftarMatakuliah)
+	matakuliah.Post("/", handler.BuatMatakuliah)
+	matakuliah.Get("/:id", handler.DetailMatakuliah)
+	matakuliah.Put("/:id", handler.PerbaruiMatakuliah)
+	matakuliah.Delete("/:id", handler.HapusMatakuliah)
+
+	// Endpoint Program Studi dengan jumlah mahasiswa (Tugas 2)
+	api.Get("/program-studi", handler.DaftarProgramStudi)
 }
