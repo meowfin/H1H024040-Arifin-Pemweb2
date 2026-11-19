@@ -21,7 +21,7 @@ func main() {
 	config.DataAwal()
 
 	app := fiber.New(fiber.Config{
-		AppName:      konf.NamaAplikasi,
+		AppName:      konf.AppName,
 		ErrorHandler: penanganGalat,
 	})
 
@@ -38,7 +38,7 @@ func main() {
 		})
 	})
 
-	log.Fatal(app.Listen(":" + konf.Port))
+	log.Fatal(app.Listen(":" + konf.AppPort))
 }
 
 func penanganGalat(c fiber.Ctx, err error) error {
@@ -50,6 +50,9 @@ func penanganGalat(c fiber.Ctx, err error) error {
 	if errors.As(err, &galatFiber) {
 		kode = galatFiber.Code
 		pesan = galatFiber.Message
+	}
+	if kode == fiber.StatusInternalServerError {
+		log.Println("Galat internal:", err.Error())
 	}
 
 	return c.Status(kode).JSON(fiber.Map{
